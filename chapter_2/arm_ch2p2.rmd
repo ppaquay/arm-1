@@ -1,0 +1,33 @@
+```{r data}
+births <- c(0.4777, 0.4875, 0.4859, 0.4754, 0.4874, 0.4864,
+            0.4813, 0.4787, 0.4895, 0.4797, 0.4876, 0.4859,
+            0.4857, 0.4907, 0.5010, 0.4903, 0.4860, 0.4911,
+            0.4871, 0.4725, 0.4822, 0.4870, 0.4823, 0.4973)
+
+```
+
+```{r a}
+# standard deviation of births
+observed_sd <- sd(births)
+observed_sd
+
+# mean proportion of births
+mean_p <- mean(births)
+mean_p
+
+# expected standard deviation with constant probability of births
+expected_sd <- sqrt((mean_p * (1 - mean_p) / 3900))
+expected_sd
+
+```
+
+```{r b}
+df <- length(births) - 1
+chi_quantiles <- qchisq(c(0.025, 0.975), df)
+
+# 95% confidence interval
+round((expected_sd * sqrt(df)) / sqrt(chi_quantiles), 3)
+
+```
+
+Since the observed standard deviation falls within the 95% confidence interval, it's not significantly different from the binomial model.
