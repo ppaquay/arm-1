@@ -1,0 +1,22 @@
+```{r}
+library(ggplot2)
+
+set.seed(1234)
+reps <- 1000
+x <- data.frame(sum = replicate(reps, sum(runif(20))))
+binwidth <- 0.5
+
+ggplot(x, aes(x = sum)) +
+  geom_histogram(binwidth = binwidth) +
+  stat_function( 
+    fun = function(x, mean, sd, n, bw) { 
+      dnorm(x = x, mean = mean, sd = sd) * n * bw
+    },
+    color = "blue",
+    args = c(mean = mean(x$sum), sd = sd(x$sum), n = reps, bw = binwidth))
+
+```
+
+The normal curve is a decent approximation of the histogram, though of course it is far too smooth.
+
+The jaggedness of the histogram can be adjusted through different bin widths, so the appearance of fit is also an artifact of the binning. Increasing the number of replications should smooth out the differences between the curve and histogram.
