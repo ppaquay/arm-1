@@ -1,0 +1,24 @@
+```{r setup}
+mean_height <- function(n, mean, sd) {
+  mean(rnorm(n, mean, sd))
+}
+
+x <- function() {
+  mean_height(100, 69.1, 2.9)
+}
+
+y <- function() 
+  {mean_height(100, 63.7, 2.7)
+}
+
+x_y_diff <- replicate(1000, x() - y())
+
+hist(x_y_diff)
+
+```
+
+The estimated mean of the difference of heights is `r mean(x_y_diff)`, and the estimated standard deviation is `r sd(x_y_diff)`.
+
+The actual mean is `r 69.1 - 63.7`.
+
+The actual standard deviation is `r sqrt((2.9^2/100) + (2.7^2/100))`.
