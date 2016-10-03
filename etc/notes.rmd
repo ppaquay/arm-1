@@ -2,6 +2,8 @@
 
 [Homepage](http://www.stat.columbia.edu/~gelman/arm/)
 
+[Data](http://www.stat.columbia.edu/~gelman/arm/examples/)
+
 [Models translated to Stan](https://github.com/stan-dev/example-models/wiki/ARM-Models)
 
 [IamGianluca's solutions](https://github.com/IamGianluca/arm)
