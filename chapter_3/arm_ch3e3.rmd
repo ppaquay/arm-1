@@ -1,0 +1,28 @@
+```{r setup}
+var1 <- rnorm(1000, mean = 0, sd = 1)
+var2 <- rnorm(1000, mean = 0, sd = 1)
+
+```
+
+```{r a}
+df <- data.frame(var1, var2)
+m <- lm(var2 ~ var1, df)
+summary(m)
+
+```
+
+The slope coefficient for `var1` is -0.01 with standard error 0.03. This is not statistically significant at the 5% significance level (p-value = 0.6).
+
+```{r b}
+z_scores <- rep(NA, 100)
+for (k in 1:100) {
+  var1 <- rnorm(1000, mean = 0, sd = 1)
+  var2 <- rnorm(1000, mean = 0, sd = 1)
+  fit <- lm(var2 ~ var1)
+  se_fit <- sqrt(diag(vcov(m)))
+  z_scores[k] <- coef(fit)[2]/se_fit[2]
+}
+
+```
+
+`r length(which(z_scores > 2 | z_scores < -2))` of the 100 z-scores are statistically significant.

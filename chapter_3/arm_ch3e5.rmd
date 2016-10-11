@@ -1,0 +1,48 @@
+```{r setup, include = FALSE}
+library(ggplot2)
+library(dplyr)
+
+beauty <- read.csv("~/projects/arm/ARM_Data/beauty/ProfEvaltnsBeautyPublic.csv")
+
+```
+
+```{r a}
+m1 <- lm(courseevaluation ~ btystdave, data = beauty)
+
+summary(m1)
+
+beauty %>%
+  ggplot(aes(x = btystdave, y = courseevaluation)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+beauty %>%
+  mutate(residuals = residuals(m1)) %>%
+  ggplot(aes(x = courseevaluation, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = summary(m1)$sigma, color = "darkgray", linetype = 2) +
+  geom_hline(yintercept = -summary(m1)$sigma, color = "darkgray", linetype = 2)
+
+```
+
+The coefficient on `btystdave` indicates that the mean course evaluation score increases by 0.13 (with standard error 0.03) for every 1 unit increase in beauty judgment.
+
+The residual standard error of 0.5 suggests that beauty judgments can predict course evaluations to about an accuracy of 0.5. However, looking at the plot of residuals versus fitted values, there's quite a bit of variation in the data not covered by this model.
+
+```{r b}
+m2 <- lm(courseevaluation ~ btystdave + age, data = beauty)
+summary(m2)
+
+m3 <- lm(courseevaluation ~ btystdave + age + btystdave:age, data = beauty)
+summary(m3)
+
+```
+
+I fit two more models, each using `btystdave` and `age` as inputs.
+
+The first model uses `btystdave` and `age` as predictors. The coefficients in this model indicate that, comparing teachers of the same age, an increase in 1 in `btystdave` is associated with a mean course evaluation increase of 0.1 (standard error 0.03). For teachers with the same beauty score in `btystdave`, `age` has a miniscule association (0.0003) with mean course evaluation.
+
+The second model adds to the first model by considering the interaction between `btystdave` and `age` as an additional input.
+
+Interestingly, the sign of the coefficient on `btystdave` has now changed to negative.
+The interaction term suggests that the effect of `btystdave` is different for different values of `age`, though we should take care when interpreting interaction effects, especially when the variables are continuous and have not been centered.

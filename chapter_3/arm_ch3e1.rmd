@@ -1,0 +1,54 @@
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+pyth <- read.table("~/projects/arm/ARM_Data/exercise2.1.dat", header = TRUE)
+
+```
+
+```{r a}
+m <- lm(y ~ x1 + x2, data = pyth[1:40, ])
+
+summary(m)
+
+```
+
+The intercept tells us that if both x1 and x2 are equal to 0, then we expect the outcome on average to be around 1.3.
+
+With x1 held constant, there is an expected difference of 0.8 in x1. With x2 held constant, there is an expected difference of 0.5 in x1.
+
+Because the standard errors are much lower than the estimates, the model seems to fit pretty well.
+
+```{r b}
+gather(pyth, predictor, x, x1:x2) %>%
+  filter(!is.na(y)) %>%
+  ggplot(aes(x = x, y = y, color = predictor)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_grid(~ predictor, scales = "free_x")
+
+```
+
+```{r c}
+pyth %>%
+  filter(!is.na(y)) %>%
+  mutate(residuals = residuals(m)) %>%
+  gather(predictor, x, x1:x2) %>%
+  ggplot(aes(x = y, y = residuals, color = predictor)) +
+  geom_point() +
+  geom_hline(yintercept = summary(m)$sigma, color = "darkgray", linetype = 2) +
+  geom_hline(yintercept = -summary(m)$sigma, color = "darkgray", linetype = 2) +
+  facet_grid(~ predictor, scales = "free_x")
+
+```
+
+Most residuals fall within 1 standard deviation of the mean, but there are some outliers that are 2 and even 3 standard deviations away, all of them in the positive direction. This makes me wonder if there is some variation not accounted for by the model.
+
+```{r d}
+predict(m, pyth[41:nrow(pyth), ], interval = "prediction", level = 0.95)
+
+```
+
+Given the residual plots above and the relative tightness of the 95% prediction intervals, I feel moderately confident about these predictions, but I might want to explore other potential variations in the data before committing to this as my final model.

@@ -1,0 +1,89 @@
+```{r setup, include = FALSE}
+library(foreign)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+iq_data <- read.dta("~/projects/arm/ARM_Data/child.iq/child.iq.dta")
+
+```
+
+```{r a}
+m1 <- lm(ppvt ~ momage, data = iq_data)
+summary(iq_data)
+summary(m1)
+
+ggplot(iq_data, aes(x = momage, y = ppvt)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+iq_data %>%
+  mutate(residuals = residuals(m1)) %>%
+  ggplot(aes(x = ppvt, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = summary(m1)$sigma, color = "darkgray", linetype = 2) +
+  geom_hline(yintercept = -summary(m1)$sigma, color = "darkgray", linetype = 2)
+
+```
+
+The pattern in the residuals suggests there's variation in the data not well explained by the model.
+
+The slope coefficient of `momage` indicates that for every additional year of a mother's age, the average child's test score increases by 0.84.
+
+This suggests mothers should give birth late in life, though that assumes that there's no negative effect brought on by childbirth in later age. (Note that in the data, `momage` stops at 29, so we don't have visibility into this.)
+
+```{r b}
+m2 <- lm(ppvt ~ momage + educ_cat, data = iq_data)
+summary(m2)
+
+gather(iq_data, predictor, x, educ_cat:momage) %>%
+  ggplot(aes(x = x, y = ppvt, color = predictor)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_grid(~ predictor, scales = "free_x")
+
+iq_data %>%
+  mutate(residuals = residuals(m2)) %>%
+  gather(predictor, x, educ_cat:momage) %>%
+  ggplot(aes(x = x, y = residuals, color = predictor)) +
+  geom_point() +
+  geom_hline(yintercept = summary(m2)$sigma, color = "darkgray", linetype = 2) +
+  geom_hline(yintercept = -summary(m2)$sigma, color = "darkgray", linetype = 2) +
+  facet_grid(~ predictor, scales = "free_x")
+
+```
+
+With mother's age held constant, an increase of 1 in a mother's education corresponds to an increase of 4.7 in an average child's test score (with standard error of 1.3).
+
+With mother's education held constant, an increase of 1 in a mother's age corresponds to an increase of only 0.3 in an average child's test score (with standard error of 0.4).
+
+When including mother's education in the model, the impact of mother's age seems much more negligible.
+
+```{r c}
+iq_data$high_school <- ifelse(iq_data$educ_cat > 1, 1, 0)
+
+m3 <- lm(ppvt ~ momage + high_school:momage, data = iq_data)
+
+summary(m3)
+
+iq_data$colors <- ifelse(iq_data$high_school == 1, "black", "gray")
+
+plot(iq_data$momage, iq_data$ppvt, col = iq_data$colors, pch = 20)
+curve(cbind(1, 1, x) %*% coef(m3), add = TRUE, col = "black")
+curve(cbind(1, 0, x) %*% coef(m3), add = TRUE, col = "gray")
+
+```
+
+The coefficient on the interaction between `momage` and `high_school` is 0.5, with a standard error of 0.1. This represents the difference in the slope of the mother's age for children whose mothers did and did not complete high school.
+
+```{r d}
+m4 <- lm(ppvt ~ momage + educ_cat, data = iq_data[1:200, ])
+predicted <- predict(m4, iq_data[201:400, ])
+
+data.frame(actual = iq_data[1:200, "ppvt"], predicted) %>%
+  ggplot(aes(x = predicted, y = actual)) +
+  geom_point() +
+  scale_x_continuous(limits = c(30, 140)) +
+  scale_y_continuous(limits = c(30, 140))
+
+```
