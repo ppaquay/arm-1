@@ -1,0 +1,37 @@
+```{r setup, include = FALSE}
+library(ggplot2)
+library(dplyr)
+
+```
+
+```{r a}
+ggplot(data.frame(x = c(0, 10)), aes(x)) +
+  stat_function(fun = function(x) 161 + 2.6 * x, geom = "line") +
+  scale_x_continuous(breaks = 0:10) +
+  labs(x = "age / 10", y = "weight")
+
+```
+
+```{r b}
+ggplot(data.frame(x = c(0, 10)), aes(x)) +
+  stat_function(fun = function(x) 161 + 2.6 * x, geom = "line", aes(color = "age10")) +
+  stat_function(fun = function(x) 96.2 + 33.6 * x - 3.2 * x^2, geom = "line", aes(color = "age10.sq")) +
+  scale_x_continuous(breaks = 0:10) +
+  labs(x = "age / 10", y = "weight")
+
+```
+
+```{r c}
+piecewise <- function(x) {
+  157.2 + 
+    19.1 * ifelse(x >= 3 & x < 4.5, 1, 0) + 
+    27.2 * ifelse(x >= 4.5 & x < 6.5, 1, 0) + 
+    8.5 * ifelse(x >= 6.5, 1, 0)
+}
+
+ggplot(data.frame(x = c(0, 10)), aes(x)) +
+  stat_function(fun = piecewise, geom = "line") +
+  scale_x_continuous(breaks = 0:10) +
+  labs(x = "age / 10", y = "weight")
+
+```

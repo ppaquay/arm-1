@@ -1,0 +1,62 @@
+```{r setup, include = FALSE}
+library(foreign)
+library(dplyr)
+
+options(scipen = 10)
+
+# note I should probably be using the wfw.dat file, but the way it's been coded
+# is incomprehensible, so I'm going to model with heights.dta instead
+earnings <- read.dta("~/projects/arm/ARM_Data/earnings/heights.dta")
+
+```
+
+```{r a}
+earnings <- earnings %>%
+  select(earn, sex, height) %>%
+  filter(!is.na(earn) 
+         & !is.na(height))
+
+```
+
+```{r b}
+m1 <- lm(earn ~ height, data = earnings)
+
+earnings$height_z <- with(earnings, (height - mean(height)) / sd(height))
+
+m2 <- lm(earn ~ height_z, data = earnings)
+
+```
+
+The average height is `r round(mean(earnings$height))`, so we expect, a person with that height to earn `r round(coef(m2)[[1]])`, on average.
+
+```{r c}
+# this model doesn't work because there are earnings of 0
+# m3 <- lm(log(earn) ~ height, data = earnings)
+
+m4 <- lm(log(earn + 10e-6) ~ height, data = earnings)
+
+# adding sex gives a nice bump to R-squared
+m5 <- lm(earn ~ height + sex, data = earnings)
+
+m6 <- lm(earn ~ height + sex + height:sex, data = earnings)
+
+m7 <- lm(earn ~ height_z + sex + height_z:sex, data = earnings)
+
+m8 <- lm(log(earn + 10e-6) ~ height_z + sex + height_z:sex, data = earnings)
+
+```
+
+Because it has the highest R-squared and the most interpretable coefficients, my preferred model is:
+
+```{r m7}
+summary(m7)
+
+```
+
+*Intercept*: The model suggests that the average predicted salary for a man with average height is `r round(coef(m7)[[1]])`.
+
+*height_z*: The coefficient for the standardized height is `r round(coef(m7))[[2]]`, the expected difference in earnings for men for every 1 standard-deviation (`r round(sd(earnings$height), 2)`) increase in height.
+
+*sex*: The coefficient for sex is `r round(coef(m7))[[3]]`, the expected difference in earnings for women compared to men of the same height.
+
+*height_z:sex*: The coefficient for the interaction between standardized height and sex is `r round(coef(m7))[[4]]`, the difference in slopes between the predictive differences in height for men and women.
