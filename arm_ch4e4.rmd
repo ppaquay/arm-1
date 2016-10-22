@@ -1,0 +1,75 @@
+```{r setup, include = FALSE}
+library(ggplot2)
+library(dplyr)
+library(foreign)
+
+pollution <- read.dta("~/projects/arm/ARM_Data/pollution.dta")
+
+```
+
+```{r a}
+ggplot(pollution, aes(x = nox, y = mort)) +
+  geom_point()
+
+m1 <- lm(mort ~ nox, data = pollution)
+
+summary(m1)
+
+pollution %>%
+  mutate(residuals = residuals(m1)) %>%
+  ggplot(aes(x = mort, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = summary(m1)$sigma, color = "darkgray", linetype = 2) +
+  geom_hline(yintercept = -summary(m1)$sigma, color = "darkgray", linetype = 2)
+
+```
+
+The linear pattern in the residuals suggests this model is not a good fit to the data.
+
+```{r b}
+m2 <- lm(log(mort) ~ log(nox), data = pollution)
+
+summary(m2)
+
+pollution %>%
+  mutate(residuals = residuals(m2)) %>%
+  ggplot(aes(x = mort, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = summary(m2)$sigma, color = "darkgray", linetype = 2) +
+  geom_hline(yintercept = -summary(m2)$sigma, color = "darkgray", linetype = 2)
+
+```
+
+The slope of the coefficient on `nox` tells us that a 1% increase in the level of nitric oxides corresponds with a 1.6% increase in the mortality rate.
+
+```{r d}
+m3 <- lm(log(mort) ~ nox + log(so2) + hc, data = pollution)
+
+summary(m3)
+
+pollution %>%
+  mutate(residuals = residuals(m3)) %>%
+  ggplot(aes(x = mort, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = summary(m3)$sigma, color = "darkgray", linetype = 2) +
+  geom_hline(yintercept = -summary(m3)$sigma, color = "darkgray", linetype = 2)
+
+```
+
+Based on the adjusted R-squared of 0.34, `m3` is the best fit to the data.
+
+With all other factors held equal, a 1-unit increase in `nox` corresponds to a 0.3% increase in mortality rate. A 1% increase in `so2` corresponds to a 1.2% increase in mortality rate. And a 1-unit increase in `hc` corresponds to a 0.2% decrease in the mortality rate.
+
+```{r e}
+m4 <- lm(log(mort) ~ nox + log(so2) + hc, data = pollution[1:30, ])
+predicted <- predict(m4, pollution[31:60, ])
+
+results <- data.frame(actual = pollution[31:60, "mort"],
+                      predicted = exp(predicted))
+
+ggplot(results, aes(x = actual, y = predicted)) +
+  geom_point()
+
+```
+
+Looking at the scatterplot comparing actual to predicted mortality rates, the model does a decent job of prediction for lower mortality rates, but there are some outliers that we might want to spend more time exploring.
