@@ -1,0 +1,53 @@
+```{r setup, include = FALSE}
+library(ggplot2)
+library(dplyr)
+library(foreign)
+
+nes <- read.dta("~/projects/arm/ARM_Data/nes/nes5200_processed_voters_realideo.dta")
+
+```
+
+```{r a}
+nes_cleaned <- nes %>%
+  filter(
+    !is.na(presvote)
+    & !is.na(race)
+    & !is.na(educ1)
+    & !is.na(income)
+    & !is.na(partyid7)
+    & !is.na(ideo7)
+  ) %>%
+  mutate(bush = ifelse(grepl("republican", presvote), 1, 0))
+
+nes_cleaned$bush <- factor(nes_cleaned$bush)
+
+m1 <- glm(bush ~ race + educ1 + income + partyid7 + ideo7,
+          data = nes_cleaned,
+          family = binomial(link = "logit"))
+
+# the coefficients on partyid7 and ideo7 are pretty big,
+# so we should consider interactions
+
+m2 <- glm(bush ~ race + educ1 + income + partyid7 + ideo7 +
+            race:partyid7 + educ1:partyid7 + income:partyid7 +
+            race:ideo7 + educ1:ideo7 + income:ideo7 + partyid7:ideo7,
+          data = nes_cleaned,
+          family = binomial(link = "logit"))
+
+```
+
+```{r b}
+m2$deviance - m1$deviance
+m2$df.residual - m1$df.residual
+
+# the residual deviance improved from 5776.5 to 5530.1 from m1 to m2
+# this is a difference of 246 while only adding 167 more degrees of freedom
+# so we'll keep the interactions in the model
+
+```
+
+There are a sizable number of input variables in `m2`, so I'll pick one set of coefficients from `m1` to interpret for practice.
+
+In the `race` input, the baseline factor level is `race1. white`. The coefficient on `race2. black` in `m1` tells us that, all else being equal, the log odds of a black person voting for Bush compared to a white person is -1.83 with standard error 0.18.
+
+We can use the divide by 4 for quick inference. This tells us that the probability of a black person voting for Bush compared to a white person is associated with a change of `-1.8 / 4 = -0.45` in probability.
